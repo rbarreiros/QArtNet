@@ -8,6 +8,8 @@
     #define PACKED __attribute__((packed))
 #endif
 
+#define SWAP_UINT16(x) (((x) >> 8) | ((x) << 8))
+
 #define ARTNET_UDP_PORT       6454
 #define ARTNET_MAX_PORTS         4  // Always 4
 #define ARTNET_SHORTNAME_LENGTH 18
@@ -176,6 +178,8 @@ typedef enum
     ARTNET_NODE_DHCP_CAPABLE      = (1 << 3),
     ARTNET_NODE_V2                = (1 << 4), // 0 - v2, 1 - v3
 } artnet_status2_t;
+
+#define ARTNET_OP_REPLY 0x2100
 
 enum artnet_packet_type_e
 {

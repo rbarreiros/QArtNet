@@ -1,11 +1,13 @@
 #include "qartnet.h"
 
 #include <QUdpSocket>
+#include <QDebug>
 
 QArtNet::QArtNet(QObject *parent)
     : QObject(parent)
 {
     m_socket = new QUdpSocket(this);
+    m_self = new QArtNetNode(this);
 
     m_nodeList.clear();
     createLocalNode();
@@ -13,16 +15,58 @@ QArtNet::QArtNet(QObject *parent)
 
 QArtNet::~QArtNet()
 {
-
+    if(m_socket->isOpen())
+        m_socket->close();
+    delete m_socket;
+    delete m_self;
 }
 
-bool QArtNet::start(QHostAddress ifaceIp)
+bool QArtNet::start(QNetworkInterface iface)
 {
-    if(!m_socket->bind(ifaceIp, ARTNET_UDP_PORT, QAbstractSocket::ReuseAddressHint))
+    m_iface = iface;
+
+    if(iface.addressEntries().count() == 0)
         return false;
 
-    m_selfIp = ifaceIp;
+    for(int i = 0; i < iface.addressEntries().count(); i++)
+    {
+        // Ignore IPv6
+        if(!iface.addressEntries().at(i).ip().toIPv4Address())
+            continue;
+
+        m_selfIp = iface.addressEntries().at(i).ip();
+        m_broadcast = iface.addressEntries().at(i).broadcast();
+        break;
+    }
+
+    /*
+    if(!m_socket->bind(m_selfIp, ARTNET_UDP_PORT, QAbstractSocket::ReuseAddressHint))
+        return false;
+*/
+    if(!m_socket->bind(QHostAddress::Any, ARTNET_UDP_PORT))
+        return false;
+
     connect(m_socket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
+    return true;
+}
+
+void QArtNet::stop()
+{
+    disconnect(m_socket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
+}
+
+void QArtNet::readPendingDatagrams()
+{
+    while(m_socket->hasPendingDatagrams())
+    {
+        QByteArray dgram;
+        dgram.resize(m_socket->pendingDatagramSize());
+        QHostAddress sender;
+        u_int16_t port;
+
+        m_socket->readDatagram(dgram.data(), dgram.size(), &sender, &port);
+        processPacket(sender, port, dgram);
+    }
 }
 
 void QArtNet::processPacket(QHostAddress sender, u_int16_t port, QByteArray datagram)
@@ -32,7 +76,10 @@ void QArtNet::processPacket(QHostAddress sender, u_int16_t port, QByteArray data
     if(id != QString("Art-Net"))
         return;
 
-    u_int16_t opCode = datagram.mid(8, 2).toInt(0, 16);
+    qDebug() << "Got ArtNet Packet";
+
+    u_int16_t opCode = datagram.at(8) + (datagram.at(9) << 8);
+
     switch(opCode)
     {
     case ARTNET_POLL:
@@ -87,25 +134,22 @@ void QArtNet::createLocalNode()
 
     m_self->setShortName("QArtnet Node");
     m_self->setLongName("QT QArtNetNode C++ Library");
-    m_self->setNodeReport("Node OK");
+    m_self->setNodeReport("OK");
+    m_self->setNumPorts(0);
 
-}
-
-void QArtNet::readPendingDatagrams()
-{
-    while(m_socket->hasPendingDatagrams())
-    {
-        QByteArray dgram;
-        dgram.resize(m_socket->pendingDatagramSize());
-        QHostAddress sender;
-        u_int16_t port;
-
-        m_socket->readDatagram(dgram.data(), dgram.size(), &sender, &port);
-        processPacket(sender, port, dgram);
-    }
+    m_self->setController(true);
+    m_self->setAlwaysReply(true);
+    m_self->setSendDiagnostics(true);
+    m_self->setUnicast(true);
 }
 
 void QArtNet::processPoll(QHostAddress sender, u_int16_t port, QArtNetPoll *poll)
 {
+    // Poll replies are always directed broadcast (for example 10.255.255.255, 192.168.1.255)
+    m_self->setAlwaysReply(poll->replyAlways());
+    m_self->setSendDiagnostics(poll->sendDiagnostics());
+    m_self->setUnicast(poll->isUnicast());
 
+    QByteArray reply = m_self->getReplyPacket();
+    m_socket->writeDatagram(reply.data(), reply.size(), m_broadcast, ARTNET_UDP_PORT);
 }

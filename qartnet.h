@@ -8,6 +8,7 @@
 
 #include <QObject>
 #include <QHostAddress>
+#include <QNetworkInterface>
 
 class QUdpSocket;
 
@@ -19,7 +20,8 @@ public:
     QArtNet(QObject *parent);
     virtual ~QArtNet();
 
-    bool start(QHostAddress ifaceIp = QHostAddress::Any);
+    bool start(QNetworkInterface iface);
+    void stop();
 
     void sendPoll();
     void sendPollReply();
@@ -66,6 +68,8 @@ private:
     QArtNetNode *m_self; // Local node
     QList<QArtNetNode> m_nodeList;
     QHostAddress m_selfIp;
+    QHostAddress m_broadcast;
+    QNetworkInterface m_iface;
 };
 
 #endif // QARTNET_H

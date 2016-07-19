@@ -1,19 +1,110 @@
 #include "qartnetnode.h"
+#include "common.h"
+
+#include <QDataStream>
 
 QArtNetNode::QArtNetNode(QObject *parent)
-    : QObject(parent)
+    : QObject(parent),
+      m_ip(QHostAddress::Any),
+      m_versinfo(0),
+      m_subnet(0),
+      m_oem(0),
+      m_ubea(0),
+      m_status(0),
+      m_estaman(0),
+      m_shortname(""),
+      m_longname(""),
+      m_nodereport(""),
+      m_numports(0),
+      m_swvideo(0),
+      m_swmacro(0),
+      m_swremote(0),
+      m_style(0),
+      m_mac(""),
+      m_status2(0),
+      m_isController(false),
+      m_sendDiagnostics(true),
+      m_unicast(false),
+      m_alwaysReply(true)
 {
-    m_serversIp.clear();
+    for(int i = 0; i < ARTNET_MAX_PORTS; i++)
+    {
+        m_porttypes[i] = 0;
+        m_goodinput[i] = 0;
+        m_goodoutput[i] = 0;
+        m_swin[i] = 0;
+        m_swout[i] = 0;
+    }
 }
 
-void QArtNetNode::parsePacket(QByteArray packet)
+void QArtNetNode::parsePollReplyPacket(QByteArray packet)
 {
+    (void)packet;
+}
 
+QByteArray QArtNetNode::ipToByteArray(QHostAddress ip)
+{
+    QByteArray out;
+    QStringList sip = ip.toString().split(":");
+    for(int i = 0; i < sip.count(); i++)
+    {
+        out.append(sip.at(i));
+    }
+
+    return out;
 }
 
 QByteArray QArtNetNode::getReplyPacket()
 {
+    QByteArray packet("Art-Net");
 
+    packet.append((char)0);
+    packet.append((char)0);
+    packet.append((char)33);
+
+
+    packet.append(ipToByteArray(m_ip));
+
+    packet.append(QByteArray::number(ARTNET_UDP_PORT));
+
+    packet.append(m_versinfo);
+    packet.append(m_subnet);
+    packet.append(m_oem);
+    packet.append(m_ubea);
+    packet.append(m_status);
+    packet.append(m_estaman);
+    packet.append(m_shortname);
+    packet.append(m_longname);
+    packet.append(getNodeReportString());
+    packet.append(m_numports);
+
+    for(int i = 0; i < ARTNET_MAX_PORTS; i++)
+    {
+        packet.append(m_porttypes[i]);
+        packet.append(m_goodinput[i]);
+        packet.append(m_goodoutput[i]);
+        packet.append(m_swin[i]);
+        packet.append(m_swout[i]);
+    }
+
+    packet.append(m_swvideo);
+    packet.append(m_swmacro);
+    packet.append(m_swremote);
+    packet.append(3, (char)0);
+    packet.append(m_style);
+    packet.append(m_mac); // no null !!!
+    packet.append(4, (char)0); // bindip
+    packet.append((char)0); // bindIndex
+    packet.append(m_status2);
+    packet.append(26, (char)0);
+
+    return packet;
+}
+
+QString QArtNetNode::getNodeReportString()
+{
+    // TODO
+    return QString("Node OK");
 }
 
 void QArtNetNode::setPortType(u_int8_t port, u_int8_t type)

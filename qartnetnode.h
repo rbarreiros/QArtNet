@@ -14,7 +14,7 @@ class QARTNETSHARED_EXPORT QArtNetNode : public QObject
 public:
     explicit QArtNetNode(QObject *parent = 0);
 
-    void parsePacket(QByteArray packet);
+    void parsePollReplyPacket(QByteArray packet);
     QByteArray getReplyPacket();
 
     void setIp(QHostAddress ip) { m_ip = ip; }
@@ -78,7 +78,20 @@ public:
     artnet_status_rdm_t getStatusRdm();
     artnet_status_ubea_t getStatusUbea();
 
+    QString getNodeReportString();
+
+    void setController(bool ctrl) { m_isController = ctrl; }
+    bool isController() { return m_isController; }
+    void setSendDiagnostics(bool diag) { m_sendDiagnostics = diag; }
+    bool sendDiagnostics() { return m_sendDiagnostics; }
+    void setUnicast(bool unicast) { m_unicast = unicast; }
+    bool sendUnicast() { return m_unicast; }
+    void setAlwaysReply(bool always) { m_alwaysReply = always; }
+    bool alwaysReply() { return m_alwaysReply; }
+
 private:
+    QByteArray ipToByteArray(QHostAddress ip);
+
     QHostAddress m_ip;                      // Node IP Address
     u_int16_t m_versinfo;                   // Firmware Version
     u_int16_t m_subnet;                     // Net switch + Subnet Switch
@@ -102,7 +115,10 @@ private:
     QString   m_mac;
     u_int8_t  m_status2;
 
-    QList<QHostAddress> m_serversIp;
+    bool m_isController;
+    bool m_sendDiagnostics;
+    bool m_unicast;
+    bool m_alwaysReply;
 };
 
 #endif // QARTNETNODE_H
