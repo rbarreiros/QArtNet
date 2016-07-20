@@ -5,7 +5,6 @@
 #-------------------------------------------------
 
 QT       += network
-
 QT       -= gui
 
 TARGET = QArtNet
@@ -13,10 +12,15 @@ TEMPLATE = lib
 
 DEFINES += QARTNET_LIBRARY
 
-SOURCES += qartnet.cpp
+SOURCES += qartnet.cpp \
+    qartnetnode.cpp \
+    qartnetpoll.cpp
 
 HEADERS += qartnet.h\
-        qartnet_global.h
+        qartnet_global.h \
+    qartnetnode.h \
+    common.h \
+    qartnetpoll.h
 
 unix {
     target.path = /usr/lib
