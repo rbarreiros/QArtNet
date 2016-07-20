@@ -66,18 +66,6 @@ public:
     void setStatus2(u_int8_t status) { m_status2 = status; }
     u_int8_t getStatus2() { return m_status2; }
 
-    void setStatusIndicator(artnet_status_indicator_t indicator);
-    void setStatusPortAuth(artnet_status_progauth_t pa);
-    void setStatusBoot(artnet_status_boot_t boot);
-    void setStatusRdm(artnet_status_rdm_t rdm);
-    void setStatusUbea(artnet_status_ubea_t ubea);
-
-    artnet_status_indicator_t getStatusIndicator();
-    artnet_status_progauth_t getStatusPortAuth();
-    artnet_status_boot_t getStatusBoot();
-    artnet_status_rdm_t getStatusRdm();
-    artnet_status_ubea_t getStatusUbea();
-
     QString getNodeReportString();
 
     void setController(bool ctrl) { m_isController = ctrl; }
@@ -90,7 +78,8 @@ public:
     bool alwaysReply() { return m_alwaysReply; }
 
 private:
-    QByteArray ipToByteArray(QHostAddress ip);
+    void ipToArray(QHostAddress ip, unsigned char *dest);
+    void macToArray(QString mac, unsigned char *dest);
 
     QHostAddress m_ip;                      // Node IP Address
     u_int16_t m_versinfo;                   // Firmware Version

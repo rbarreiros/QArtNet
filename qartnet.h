@@ -66,7 +66,7 @@ private:
 
     QUdpSocket *m_socket;
     QArtNetNode *m_self; // Local node
-    QList<QArtNetNode> m_nodeList;
+    QList<QArtNetNode *> m_nodeList;
     QHostAddress m_selfIp;
     QHostAddress m_broadcast;
     QNetworkInterface m_iface;

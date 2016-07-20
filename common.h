@@ -8,8 +8,29 @@
     #define PACKED __attribute__((packed))
 #endif
 
-#define SWAP_UINT16(x) (((x) >> 8) | ((x) << 8))
+#ifndef bswap_16
+#define bswap_16(x)  ((((x) >> 8) & 0xff) | (((x) & 0xff) << 8))
+#endif
 
+#ifdef HAVE_ENDIAN_H
+# if BYTE_ORDER == __BIG_ENDIAN
+#  define htols(x)   bswap_16 (x)
+# else
+#  define htols(x)  (x)
+# endif
+#else
+# if BYTE_ORDER == BIG_ENDIAN
+#  define htols(x)   bswap_16 (x)
+# else
+#  define htols(x)  (x)
+# endif
+#endif
+
+#define OEM     0x0431
+#define ESTAMAN 0x5944
+
+#define ARTNET_STRING  "Art-Net\0"
+#define ARTNET_STRING_SIZE       8
 #define ARTNET_UDP_PORT       6454
 #define ARTNET_MAX_PORTS         4  // Always 4
 #define ARTNET_SHORTNAME_LENGTH 18
@@ -21,6 +42,11 @@
 #define ARTNET_ESTA_SIZE         2
 #define ARTNET_IP_SIZE           4
 #define ARTNET_VERSION          14
+
+#define ARTNET_TTM_ALWAYS      0x02
+#define ARTNET_TTM_SEND_DIAG   0x04
+#define ARTNET_TTM_UNICAST     0x08
+#define ARTNET_TTM_DISABLE_VLC 0x10
 
 typedef enum
 {
@@ -109,44 +135,37 @@ typedef enum
     ARTNET_STATIS_USER_FAIL             = 0x000f
 } artnet_node_status_t;
 
-// m_status bit 7-8
-typedef enum
-{
-    STATUS_INDICATOR_UNKNOWN = 0,
-    STATUS_INDICATOR_LOCATE,
-    STATUS_INDICATOR_MUTE,
-    STATUS_INDICATOR_NORMAL
-} artnet_status_indicator_t;
+/** Status **/
 
-// m_status bit 5-6
-typedef enum
-{
-    STATUS_PORTAUTH_UNKNOWN = 0,
-    STATUS_PORTAUTH_PANEL,
-    STATUS_PORTAUTH_NETWORK,
-    STATUS_PORTAUTH_NOTUSED
-} artnet_status_progauth_t;
+#define STATUS_INDICATOR_UNKNOWN 0x00
+#define STATUS_INDICATOR_LOCATE  0x40
+#define STATUS_INDICATOR_MUTE    0x80
+#define STATUS_INDICATOR_NORMAL  0xc0
 
-// m_status bit 3
-typedef enum
-{
-    STATUS_BOOT_FIRMWARE = 0,
-    STATUS_BOOT_ROM
-} artnet_status_boot_t;
+#define STATUS_PORTAUTH_UNKNOWN  0x00
+#define STATUS_PORTAUTH_PANEL    0x10
+#define STATUS_PORTAUTH_NETWORK  0x20
+#define STATUS_PORTAUTH_NOTUSED  0x30
 
-// m_status bit 2
-typedef enum
-{
-    STATUS_RDM_NOT_CAPABLE = 0,
-    STATUS_RDM_CAPABLE
-} artnet_status_rdm_t;
+#define STATUS_BOOT_FIRMWARE     0x00
+#define STATUS_BOOT_ROM          0x04
 
-//m_status bit 1
-typedef enum
-{
-    STATUS_UBEA_CORRUPT = 0,
-    STATUS_UBEA_OK
-} artnet_status_ubea_t;
+#define STATUS_RDM_NOT_CAPABLE   0x00
+#define STATUS_RDM_CAPABLE       0x02
+
+#define STATUS_UBEA_CORRUPT      0x00
+#define STATUS_UBEA_OK           0x01
+
+/** Status 2 **/
+
+#define STATUS2_BROWSER_NOT_OK  0x00
+#define STATUS2_BROWSER_OK      0x01
+#define STATUS2_MANUAL_IP       0x00
+#define STATUS2_DHCP            0x02
+#define STATUS2_NO_DHCP_CAPABLE 0x00
+#define STATUS2_DHCP_CAPABLE    0x04
+#define STATUS2_8BIT_PORT       0x00
+#define STATUS2_15BIT_PORT      0x08
 
 // m_goodinput
 typedef enum
@@ -170,16 +189,6 @@ typedef enum
     ARTNET_GO_INC_DMX512_TEST   = (1 << 7),
     ARTNET_GO_DATA_TRANSMITTING = (1 << 8)
 } artnet_goodoutput_t;
-
-typedef enum
-{
-    ARTNET_SUPPORT_BROWSER_CONFIG = (1 << 1),
-    ARTNET_NODE_IP_CONFIG_MANUAL  = (1 << 2), // 0 = manual, 1 = dhcp
-    ARTNET_NODE_DHCP_CAPABLE      = (1 << 3),
-    ARTNET_NODE_V2                = (1 << 4), // 0 - v2, 1 - v3
-} artnet_status2_t;
-
-#define ARTNET_OP_REPLY 0x2100
 
 enum artnet_packet_type_e
 {
@@ -207,5 +216,56 @@ enum artnet_packet_type_e
 } PACKED;
 
 typedef enum artnet_packet_type_e artnet_packet_type_t;
+
+struct	artnet_poll_s {
+  u_int8_t  id[8];
+  u_int16_t opCode;
+  u_int8_t  verH;
+  u_int8_t  ver;
+  u_int8_t  ttm;
+  u_int8_t  prio;
+} PACKED;
+
+typedef struct artnet_poll_s artnet_poll_t;
+
+struct artnet_reply_s {
+  u_int8_t  id[8];
+  u_int16_t opCode;
+  u_int8_t  ip[4];
+  u_int16_t port;
+  u_int8_t  verH;
+  u_int8_t  ver;
+  u_int8_t  subH;
+  u_int8_t  sub;
+  u_int8_t  oemH;
+  u_int8_t  oem;
+  u_int8_t  ubea;
+  u_int8_t  status;
+  u_int8_t  estaman[2];
+  u_int8_t  shortname[ARTNET_SHORTNAME_LENGTH];
+  u_int8_t  longname[ARTNET_LONGNAME_LENGTH];
+  u_int8_t  nodereport[ARTNET_REPORT_LENGTH];
+  u_int8_t  numbportsH;
+  u_int8_t  numbports;
+  u_int8_t  porttypes[ARTNET_MAX_PORTS];
+  u_int8_t  goodinput[ARTNET_MAX_PORTS];
+  u_int8_t  goodoutput[ARTNET_MAX_PORTS];
+  u_int8_t  swin[ARTNET_MAX_PORTS];
+  u_int8_t  swout[ARTNET_MAX_PORTS];
+  u_int8_t  swvideo;
+  u_int8_t  swmacro;
+  u_int8_t  swremote;
+  u_int8_t  sp1;
+  u_int8_t  sp2;
+  u_int8_t  sp3;
+  u_int8_t  style;
+  u_int8_t  mac[ARTNET_MAC_SIZE];
+  u_int8_t  bindIp[4];
+  u_int8_t  bindIndex;
+  u_int8_t  status2;
+  u_int8_t  filler[26];
+} PACKED;
+
+typedef struct artnet_reply_s artnet_reply_t;
 
 #endif // COMMON_H

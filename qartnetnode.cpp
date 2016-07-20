@@ -42,63 +42,73 @@ void QArtNetNode::parsePollReplyPacket(QByteArray packet)
     (void)packet;
 }
 
-QByteArray QArtNetNode::ipToByteArray(QHostAddress ip)
+void QArtNetNode::ipToArray(QHostAddress ip, unsigned char *dest)
 {
-    QByteArray out;
-    QStringList sip = ip.toString().split(":");
+    QStringList sip = ip.toString().split(".");
     for(int i = 0; i < sip.count(); i++)
     {
-        out.append(sip.at(i));
+        dest[i] = sip.at(i).toInt();
     }
+}
 
-    return out;
+void QArtNetNode::macToArray(QString mac, unsigned char *dest)
+{
+    QStringList sm = mac.split(":");
+    for(int i = 0; i < sm.count(); i++)
+    {
+        dest[i] = sm.at(i).toInt(0, 16);
+    }
 }
 
 QByteArray QArtNetNode::getReplyPacket()
 {
-    QByteArray packet("Art-Net");
+    artnet_reply_t reply;
+    memset((char *)&reply, 0, sizeof(artnet_reply_t));
 
-    packet.append((char)0);
-    packet.append((char)0);
-    packet.append((char)33);
+    memcpy(reply.id, ARTNET_STRING, ARTNET_STRING_SIZE);
+    reply.opCode = htols(ARTNET_REPLY);
 
+    qDebug() << m_ip.toString();
+    ipToArray(m_ip, reply.ip);
+    reply.port = htols(ARTNET_UDP_PORT);
+    reply.verH = (m_versinfo >> 8) & 0xff;
+    reply.ver = m_versinfo & 0xff;
+    reply.subH = (m_subnet >> 8) & 0xff;
+    reply.sub = m_subnet & 0xff;
+    reply.oemH = (m_oem >> 8) & 0xff;
+    reply.oem = m_oem & 0xff;
+    reply.ubea = m_ubea;
+    reply.status = m_status;
+    reply.estaman[1] = (m_estaman >> 8) & 0xff;
+    reply.estaman[0] = (m_estaman & 0xff);
+    memcpy(reply.shortname, m_shortname.toStdString().c_str(), ARTNET_SHORTNAME_LENGTH);
+    memcpy(reply.longname, m_longname.toStdString().c_str(), ARTNET_LONGNAME_LENGTH);
+    memcpy(reply.nodereport, getNodeReportString().toStdString().c_str(), ARTNET_REPORT_LENGTH);
+    reply.numbportsH = (m_numports >> 8) & 0xff;
+    reply.numbports = (m_numports & 0xff);
+    macToArray(m_mac, reply.mac);
+    reply.status2 = m_status2;
 
-    packet.append(ipToByteArray(m_ip));
-
-    packet.append(QByteArray::number(ARTNET_UDP_PORT));
-
-    packet.append(m_versinfo);
-    packet.append(m_subnet);
-    packet.append(m_oem);
-    packet.append(m_ubea);
-    packet.append(m_status);
-    packet.append(m_estaman);
-    packet.append(m_shortname);
-    packet.append(m_longname);
-    packet.append(getNodeReportString());
-    packet.append(m_numports);
+    ipToArray(m_ip, reply.bindIp);
+    reply.bindIndex = 0;
 
     for(int i = 0; i < ARTNET_MAX_PORTS; i++)
     {
-        packet.append(m_porttypes[i]);
-        packet.append(m_goodinput[i]);
-        packet.append(m_goodoutput[i]);
-        packet.append(m_swin[i]);
-        packet.append(m_swout[i]);
+        reply.porttypes[i] = m_porttypes[i];
+        reply.goodinput[i] = m_goodinput[i];
+        reply.goodoutput[i] = m_goodoutput[i];
+        reply.swin[i] = m_swin[i];
+        reply.swout[i] = m_swout[i];
     }
 
-    packet.append(m_swvideo);
-    packet.append(m_swmacro);
-    packet.append(m_swremote);
-    packet.append(3, (char)0);
-    packet.append(m_style);
-    packet.append(m_mac); // no null !!!
-    packet.append(4, (char)0); // bindip
-    packet.append((char)0); // bindIndex
-    packet.append(m_status2);
-    packet.append(26, (char)0);
+    reply.swvideo = m_swvideo;
+    reply.swmacro = m_swmacro;
+    reply.swremote = m_swremote;
+    reply.style = m_style;
 
-    return packet;
+
+    return QByteArray(reinterpret_cast<const char *>(&reply),
+                      sizeof(artnet_reply_t));
 }
 
 QString QArtNetNode::getNodeReportString()
@@ -175,54 +185,4 @@ u_int8_t QArtNetNode::getSwout(u_int8_t port)
     if(port > ARTNET_MAX_PORTS)
         return 0;
     return m_swout[port];
-}
-
-void QArtNetNode::setStatusIndicator(artnet_status_indicator_t indicator)
-{
-    m_status = (indicator << 7);
-}
-
-void QArtNetNode::setStatusPortAuth(artnet_status_progauth_t pa)
-{
-    m_status = (pa << 5);
-}
-
-void QArtNetNode::setStatusBoot(artnet_status_boot_t boot)
-{
-    m_status = (boot << 3);
-}
-
-void QArtNetNode::setStatusRdm(artnet_status_rdm_t rdm)
-{
-    m_status = (rdm << 2);
-}
-
-void QArtNetNode::setStatusUbea(artnet_status_ubea_t ubea)
-{
-    m_status = (ubea << 1);
-}
-
-artnet_status_indicator_t QArtNetNode::getStatusIndicator()
-{
-    return (artnet_status_indicator_t)(m_status & (0x2 << 7));
-}
-
-artnet_status_progauth_t QArtNetNode::getStatusPortAuth()
-{
-    return (artnet_status_progauth_t)(m_status & (0x2 << 5));
-}
-
-artnet_status_boot_t QArtNetNode::getStatusBoot()
-{
-    return (artnet_status_boot_t)(m_status & (1 << 3));
-}
-
-artnet_status_rdm_t QArtNetNode::getStatusRdm()
-{
-    return (artnet_status_rdm_t)(m_status & (1 << 2));
-}
-
-artnet_status_ubea_t QArtNetNode::getStatusUbea()
-{
-    return (artnet_status_ubea_t)(m_status & (1 << 1));
 }
