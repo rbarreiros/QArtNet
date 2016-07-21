@@ -4,13 +4,14 @@
 #include "qartnet_global.h"
 #include "common.h"
 #include "qartnetnode.h"
-#include "qartnetpoll.h"
 
 #include <QObject>
 #include <QHostAddress>
 #include <QNetworkInterface>
 
 class QUdpSocket;
+class QArtNetPoll;
+class QArtNetReply;
 
 class QARTNETSHARED_EXPORT QArtNet : public QObject
 {
@@ -59,14 +60,19 @@ private slots:
     void readPendingDatagrams();
 
 private:
-    void processPoll(QHostAddress sender, u_int16_t port, QArtNetPoll *poll);
+    void processPoll(QHostAddress sender, QArtNetPoll *poll);
+    void processReply(QArtNetReply *reply);
 
     void processPacket(QHostAddress sender, u_int16_t port, QByteArray datagram);
     void createLocalNode();
 
+    // List of controllers on the network
+    QList<QHostAddress> m_controllers;
+    // List of nodes on the network
+    QList<QArtNetNode *> m_nodeList;
+
     QUdpSocket *m_socket;
     QArtNetNode *m_self; // Local node
-    QList<QArtNetNode *> m_nodeList;
     QHostAddress m_selfIp;
     QHostAddress m_broadcast;
     QNetworkInterface m_iface;

@@ -14,13 +14,15 @@ DEFINES += QARTNET_LIBRARY
 
 SOURCES += qartnet.cpp \
     qartnetnode.cpp \
-    qartnetpoll.cpp
+    qartnetpoll.cpp \
+    qartnetreply.cpp
 
 HEADERS += qartnet.h\
         qartnet_global.h \
     qartnetnode.h \
     common.h \
-    qartnetpoll.h
+    qartnetpoll.h \
+    qartnetreply.h
 
 unix {
     target.path = /usr/lib

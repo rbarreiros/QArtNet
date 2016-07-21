@@ -1,6 +1,9 @@
 #include "qartnet.h"
+#include "qartnetpoll.h"
+#include "qartnetreply.h"
 
 #include <QUdpSocket>
+
 #include <QDebug>
 
 QArtNet::QArtNet(QObject *parent)
@@ -78,6 +81,8 @@ void QArtNet::readPendingDatagrams()
 
 void QArtNet::processPacket(QHostAddress sender, u_int16_t port, QByteArray datagram)
 {
+    (void)port;
+
     // Is this a valid ArtNet packet ?
     QString id(datagram.left(8));
     if(id != QString("Art-Net"))
@@ -90,9 +95,10 @@ void QArtNet::processPacket(QHostAddress sender, u_int16_t port, QByteArray data
     switch(opCode)
     {
     case ARTNET_POLL:
-        processPoll(sender, port, new QArtNetPoll(this, datagram));
+        processPoll(sender, new QArtNetPoll(this, datagram));
         break;
     case ARTNET_REPLY:
+        //processReply(new QArtNetReply(this, datagram));
         break;
     case ARTNET_DMX:
         break;
@@ -131,7 +137,7 @@ void QArtNet::createLocalNode()
 
     m_self->setUbea(0);
 
-    m_self->setStatus(STATUS_INDICATOR_NORMAL | STATUS_PORTAUTH_NETWORK);
+    //m_self->setStatus(STATUS_INDICATOR_NORMAL | STATUS_PORTAUTH_NETWORK);
     m_self->setEstaman(ESTAMAN);
 
     m_self->setShortName("QArtnet Node");
@@ -145,29 +151,26 @@ void QArtNet::createLocalNode()
     m_self->setUnicast(true);
 
     m_self->setMac(m_iface.hardwareAddress());
-    m_self->setStatus2(STATUS2_BROWSER_OK | STATUS2_DHCP | STATUS2_DHCP_CAPABLE | STATUS2_15BIT_PORT);
+    //m_self->setStatus2(STATUS2_BROWSER_OK | STATUS2_DHCP | STATUS2_DHCP_CAPABLE | STATUS2_15BIT_PORT);
 }
 
 void QArtNet::sendPoll()
 {
-    artnet_poll_t poll;
+    QByteArray packet;
+    QArtNetPoll *poll = new QArtNetPoll(this);
+    poll->setReplyAlways(true);
+    poll->setSendDiagnostics(true);
 
-    memcpy(poll.id, ARTNET_STRING, ARTNET_STRING_SIZE);
-    poll.opCode = htols(ARTNET_POLL);
-    poll.verH = 0;
-    poll.ver = ARTNET_VERSION;
-    poll.ttm = (ARTNET_TTM_ALWAYS | ARTNET_TTM_SEND_DIAG);
-    poll.prio = 0;
-
-    m_socket->writeDatagram(QByteArray(reinterpret_cast<const char *>(&poll),
-                                       sizeof(artnet_poll_t)), m_broadcast, ARTNET_UDP_PORT);
+    packet = poll->toDatagram();
+    m_socket->writeDatagram(packet.data(), packet.size(), m_broadcast, ARTNET_UDP_PORT);
     qDebug() << "Sent Poll";
 }
 
-void QArtNet::processPoll(QHostAddress sender, u_int16_t port, QArtNetPoll *poll)
+void QArtNet::processPoll(QHostAddress sender, QArtNetPoll *poll)
 {
-    (void)sender;
-    (void)port;
+    if(sender != m_selfIp && !m_controllers.contains(sender))
+        m_controllers.append(sender);
+
     // Poll replies are always directed broadcast (for example 10.255.255.255, 192.168.1.255)
     m_self->setAlwaysReply(poll->replyAlways());
     m_self->setSendDiagnostics(poll->sendDiagnostics());
@@ -175,4 +178,9 @@ void QArtNet::processPoll(QHostAddress sender, u_int16_t port, QArtNetPoll *poll
 
     QByteArray reply = m_self->getReplyPacket();
     m_socket->writeDatagram(reply.data(), reply.size(), m_broadcast, ARTNET_UDP_PORT);
+}
+
+void QArtNet::processReply(QArtNetReply *reply)
+{
+    (void)reply;
 }

@@ -43,10 +43,6 @@
 #define ARTNET_IP_SIZE           4
 #define ARTNET_VERSION          14
 
-#define ARTNET_TTM_ALWAYS      0x02
-#define ARTNET_TTM_SEND_DIAG   0x04
-#define ARTNET_TTM_UNICAST     0x08
-#define ARTNET_TTM_DISABLE_VLC 0x10
 
 typedef enum
 {
@@ -135,60 +131,7 @@ typedef enum
     ARTNET_STATIS_USER_FAIL             = 0x000f
 } artnet_node_status_t;
 
-/** Status **/
 
-#define STATUS_INDICATOR_UNKNOWN 0x00
-#define STATUS_INDICATOR_LOCATE  0x40
-#define STATUS_INDICATOR_MUTE    0x80
-#define STATUS_INDICATOR_NORMAL  0xc0
-
-#define STATUS_PORTAUTH_UNKNOWN  0x00
-#define STATUS_PORTAUTH_PANEL    0x10
-#define STATUS_PORTAUTH_NETWORK  0x20
-#define STATUS_PORTAUTH_NOTUSED  0x30
-
-#define STATUS_BOOT_FIRMWARE     0x00
-#define STATUS_BOOT_ROM          0x04
-
-#define STATUS_RDM_NOT_CAPABLE   0x00
-#define STATUS_RDM_CAPABLE       0x02
-
-#define STATUS_UBEA_CORRUPT      0x00
-#define STATUS_UBEA_OK           0x01
-
-/** Status 2 **/
-
-#define STATUS2_BROWSER_NOT_OK  0x00
-#define STATUS2_BROWSER_OK      0x01
-#define STATUS2_MANUAL_IP       0x00
-#define STATUS2_DHCP            0x02
-#define STATUS2_NO_DHCP_CAPABLE 0x00
-#define STATUS2_DHCP_CAPABLE    0x04
-#define STATUS2_8BIT_PORT       0x00
-#define STATUS2_15BIT_PORT      0x08
-
-// m_goodinput
-typedef enum
-{
-    ARTNET_GI_ERRORS          = (1 << 3),
-    ARTNET_GI_INPUT_DISABLED  = (1 << 4),
-    ARTNET_GI_INC_DMX512_TEXT = (1 << 5),
-    ARTNET_GI_INC_DMX512_SIP  = (1 << 6),
-    ARTNET_GI_INC_DMX512_TEST = (1 << 7),
-    ARTNET_GI_DATA_RECEIVED   = (1 << 8)
-} artnet_goodinput_t;
-
-// m_goodoutput
-typedef enum
-{
-    ARTNET_GO_MERGE_LTP         = (1 << 2),
-    ARTNET_GO_DMXOUT_SHORTCUT   = (1 << 3),
-    ARTNET_GO_DMX_MERGING       = (1 << 4),
-    ARTNET_GO_INC_DMX512_TEXT   = (1 << 5),
-    ARTNET_GO_INC_DMX512_SIP    = (1 << 6),
-    ARTNET_GO_INC_DMX512_TEST   = (1 << 7),
-    ARTNET_GO_DATA_TRANSMITTING = (1 << 8)
-} artnet_goodoutput_t;
 
 enum artnet_packet_type_e
 {
@@ -214,58 +157,5 @@ enum artnet_packet_type_e
   ARTNET_MEDIAPATCH         = 0x9200,
   ARTNET_MEDIACONTROLREPLY  = 0x9300
 } PACKED;
-
-typedef enum artnet_packet_type_e artnet_packet_type_t;
-
-struct	artnet_poll_s {
-  u_int8_t  id[8];
-  u_int16_t opCode;
-  u_int8_t  verH;
-  u_int8_t  ver;
-  u_int8_t  ttm;
-  u_int8_t  prio;
-} PACKED;
-
-typedef struct artnet_poll_s artnet_poll_t;
-
-struct artnet_reply_s {
-  u_int8_t  id[8];
-  u_int16_t opCode;
-  u_int8_t  ip[4];
-  u_int16_t port;
-  u_int8_t  verH;
-  u_int8_t  ver;
-  u_int8_t  subH;
-  u_int8_t  sub;
-  u_int8_t  oemH;
-  u_int8_t  oem;
-  u_int8_t  ubea;
-  u_int8_t  status;
-  u_int8_t  estaman[2];
-  u_int8_t  shortname[ARTNET_SHORTNAME_LENGTH];
-  u_int8_t  longname[ARTNET_LONGNAME_LENGTH];
-  u_int8_t  nodereport[ARTNET_REPORT_LENGTH];
-  u_int8_t  numbportsH;
-  u_int8_t  numbports;
-  u_int8_t  porttypes[ARTNET_MAX_PORTS];
-  u_int8_t  goodinput[ARTNET_MAX_PORTS];
-  u_int8_t  goodoutput[ARTNET_MAX_PORTS];
-  u_int8_t  swin[ARTNET_MAX_PORTS];
-  u_int8_t  swout[ARTNET_MAX_PORTS];
-  u_int8_t  swvideo;
-  u_int8_t  swmacro;
-  u_int8_t  swremote;
-  u_int8_t  sp1;
-  u_int8_t  sp2;
-  u_int8_t  sp3;
-  u_int8_t  style;
-  u_int8_t  mac[ARTNET_MAC_SIZE];
-  u_int8_t  bindIp[4];
-  u_int8_t  bindIndex;
-  u_int8_t  status2;
-  u_int8_t  filler[26];
-} PACKED;
-
-typedef struct artnet_reply_s artnet_reply_t;
 
 #endif // COMMON_H

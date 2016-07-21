@@ -1,5 +1,7 @@
 #include "qartnetnode.h"
+
 #include "common.h"
+#include "qartnetreply.h"
 
 #include <QDataStream>
 
@@ -62,6 +64,7 @@ void QArtNetNode::macToArray(QString mac, unsigned char *dest)
 
 QByteArray QArtNetNode::getReplyPacket()
 {
+
     artnet_reply_t reply;
     memset((char *)&reply, 0, sizeof(artnet_reply_t));
 

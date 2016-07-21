@@ -50,15 +50,19 @@ OBJECTS_DIR   = ./
 
 SOURCES       = qartnet.cpp \
 		qartnetnode.cpp \
-		qartnetpoll.cpp moc_qartnet.cpp \
+		qartnetpoll.cpp \
+		qartnetreply.cpp moc_qartnet.cpp \
 		moc_qartnetnode.cpp \
-		moc_qartnetpoll.cpp
+		moc_qartnetpoll.cpp \
+		moc_qartnetreply.cpp
 OBJECTS       = qartnet.o \
 		qartnetnode.o \
 		qartnetpoll.o \
+		qartnetreply.o \
 		moc_qartnet.o \
 		moc_qartnetnode.o \
-		moc_qartnetpoll.o
+		moc_qartnetpoll.o \
+		moc_qartnetreply.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/linux.conf \
@@ -126,9 +130,11 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		qartnet_global.h \
 		qartnetnode.h \
 		common.h \
-		qartnetpoll.h qartnet.cpp \
+		qartnetpoll.h \
+		qartnetreply.h qartnet.cpp \
 		qartnetnode.cpp \
-		qartnetpoll.cpp
+		qartnetpoll.cpp \
+		qartnetreply.cpp
 QMAKE_TARGET  = QArtNet
 DESTDIR       = #avoid trailing-slash linebreak
 TARGET        = libQArtNet.so.1.0.0
@@ -323,8 +329,8 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents qartnet.h qartnet_global.h qartnetnode.h common.h qartnetpoll.h $(DISTDIR)/
-	$(COPY_FILE) --parents qartnet.cpp qartnetnode.cpp qartnetpoll.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents qartnet.h qartnet_global.h qartnetnode.h common.h qartnetpoll.h qartnetreply.h $(DISTDIR)/
+	$(COPY_FILE) --parents qartnet.cpp qartnetnode.cpp qartnetpoll.cpp qartnetreply.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -348,13 +354,12 @@ check: first
 
 compiler_rcc_make_all:
 compiler_rcc_clean:
-compiler_moc_header_make_all: moc_qartnet.cpp moc_qartnetnode.cpp moc_qartnetpoll.cpp
+compiler_moc_header_make_all: moc_qartnet.cpp moc_qartnetnode.cpp moc_qartnetpoll.cpp moc_qartnetreply.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc_qartnet.cpp moc_qartnetnode.cpp moc_qartnetpoll.cpp
+	-$(DEL_FILE) moc_qartnet.cpp moc_qartnetnode.cpp moc_qartnetpoll.cpp moc_qartnetreply.cpp
 moc_qartnet.cpp: qartnet_global.h \
 		common.h \
 		qartnetnode.h \
-		qartnetpoll.h \
 		qartnet.h
 	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/rbarreiros/Projectos/Luz/artnet/QArtNet/QArtNet -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtNetwork -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include qartnet.h -o moc_qartnet.cpp
 
@@ -363,8 +368,12 @@ moc_qartnetnode.cpp: qartnet_global.h \
 		qartnetnode.h
 	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/rbarreiros/Projectos/Luz/artnet/QArtNet/QArtNet -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtNetwork -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include qartnetnode.h -o moc_qartnetnode.cpp
 
-moc_qartnetpoll.cpp: qartnetpoll.h
+moc_qartnetpoll.cpp: common.h \
+		qartnetpoll.h
 	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/rbarreiros/Projectos/Luz/artnet/QArtNet/QArtNet -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtNetwork -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include qartnetpoll.h -o moc_qartnetpoll.cpp
+
+moc_qartnetreply.cpp: qartnetreply.h
+	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/rbarreiros/Projectos/Luz/artnet/QArtNet/QArtNet -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtNetwork -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include qartnetreply.h -o moc_qartnetreply.cpp
 
 compiler_moc_source_make_all:
 compiler_moc_source_clean:
@@ -390,8 +399,12 @@ qartnetnode.o: qartnetnode.cpp qartnetnode.h \
 		common.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qartnetnode.o qartnetnode.cpp
 
-qartnetpoll.o: qartnetpoll.cpp qartnetpoll.h
+qartnetpoll.o: qartnetpoll.cpp qartnetpoll.h \
+		common.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qartnetpoll.o qartnetpoll.cpp
+
+qartnetreply.o: qartnetreply.cpp qartnetreply.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qartnetreply.o qartnetreply.cpp
 
 moc_qartnet.o: moc_qartnet.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_qartnet.o moc_qartnet.cpp
@@ -401,6 +414,9 @@ moc_qartnetnode.o: moc_qartnetnode.cpp
 
 moc_qartnetpoll.o: moc_qartnetpoll.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_qartnetpoll.o moc_qartnetpoll.cpp
+
+moc_qartnetreply.o: moc_qartnetreply.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_qartnetreply.o moc_qartnetreply.cpp
 
 ####### Install
 
